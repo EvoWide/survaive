@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Getting server-sent updates and sending messages - Channel {{index . "channel"}} ()</h1>
+<input id="message" type="text" placeholder="Type your message here...">
+<button onclick="sendMessage()">Send</button>
+<div id="result"></div>
+
+<script>
+    // Example taken from: https://www.w3schools.com/html/html5_serversentevents.asp
+    if (typeof (EventSource) !== "undefined") {
+        const source = new EventSource(`/events/{{index . "channel"}}`);
+        source.onmessage = function (event) {
+            document.getElementById("result").innerHTML += event.data + "<br>";
+        };
+    } else {
+        document.getElementById("result").innerHTML = "Sorry, your browser does not support server-sent events...";
+    }
+
+    function sendMessage() {
+        const message = document.getElementById("message").value;
+        if (message !== "") {
+            fetch('/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({channel: `{{index . "channel"}}`, value: message}),
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById("result").innerHTML += "Failed to send message.<br>";
+            });
+            document.getElementById("message").value = ""; // Clear the input field
+        }
+    }
+</script>
+
+</body>
+</html>
