@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+    <body>
+        <h1>
+            Getting server-sent updates and sending messages - Channel {{index .
+            "roomId"}} ()
+        </h1>
+        <form id="postForm">
+            <input
+                id="message"
+                type="text"
+                placeholder="Type your message here..."
+            />
+            <button type="submit">Send</button>
+        </form>
+        <div id="result"></div>
+
+        <script>
+            const randomUserId = (Math.random() + 1).toString(36).substring(7);
+
+            // Example taken from: https://www.w3schools.com/html/html5_serversentevents.asp
+            if (typeof EventSource !== "undefined") {
+                const source = new EventSource(
+                    `/channels/{{index . "roomId"}}/stream?userId=${randomUserId}`,
+                );
+                source.onmessage = function (event) {
+                    document.getElementById("result").innerHTML +=
+                        event.data + "<br>";
+                };
+            } else {
+                document.getElementById("result").innerHTML =
+                    "Sorry, your browser does not support server-sent events...";
+            }
+
+            document.querySelector("#postForm").onsubmit = sendMessage;
+            function sendMessage(e) {
+                e.preventDefault();
+                const inputBox = document.getElementById("message");
+
+                if (inputBox.value !== "" && !inputBox.disabled) {
+                    inputBox.disabled = true;
+                    fetch(`/channels/{{index . "roomId"}}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            message: inputBox.value,
+                            userId: randomUserId,
+                        }),
+                    })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                            document.getElementById("result").innerHTML +=
+                                "Failed to send message.<br>";
+                        })
+                        .then(() => {
+                            inputBox.value = ""; // Clear the input field
+                        })
+                        .finally(() => {
+                            inputBox.disabled = false;
+                            inputBox.focus();
+                        });
+                }
+            }
+        </script>
+    </body>
+</html>

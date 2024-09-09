@@ -1,4 +1,4 @@
-package models
+package sse
 
 import (
 	"bytes"
