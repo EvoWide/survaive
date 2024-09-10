@@ -6,11 +6,16 @@ import (
 	"survaive/sse"
 
 	"github.com/labstack/echo/v4"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterRoutes(e *echo.Echo) {
+const (
+	BROKER_REDIS_CHANNEL = "transport:sse"
+)
+
+func RegisterRoutes(e *echo.Echo, redis *redis.Client) {
 	broker := sse.NewBroker()
-	// broker.AttachRedisBus(client *redis.Client, channel string)
+	broker.AttachRedisBus(redis, BROKER_REDIS_CHANNEL)
 
 	handler := handler.NewHandler(broker)
 

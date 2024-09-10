@@ -19,19 +19,20 @@ func NewRedisBus(client *redis.Client, channel string) *RedisBus {
 }
 
 func (b *RedisBus) Publish(payload string) {
-	b.Client.Publish(context.Background(), b.Channel, &BusMessage{b.BusId, payload}) // todo: handle result
+	err := b.Client.Publish(context.Background(), b.Channel, &BusMessage{b.BusId, payload}).Err() // todo: better error
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (b *RedisBus) Subscribe() chan string {
 	pubsub := b.Client.Subscribe(context.Background(), b.Channel)
-	defer pubsub.Close()
-
 	c := make(chan string)
 
 	go func() {
-		for {
-			raw := <-pubsub.Channel()
+		ch := pubsub.Channel()
 
+		for raw := range ch {
 			msg := &BusMessage{}
 			err := json.Unmarshal([]byte(raw.Payload), msg)
 
