@@ -6,17 +6,9 @@ import (
 	"survaive/sse"
 
 	"github.com/labstack/echo/v4"
-	"github.com/redis/go-redis/v9"
 )
 
-const (
-	BROKER_REDIS_CHANNEL = "transport:sse"
-)
-
-func RegisterRoutes(e *echo.Echo, redis *redis.Client) {
-	broker := sse.NewBroker()
-	broker.AttachRedisBus(redis, BROKER_REDIS_CHANNEL)
-
+func RegisterRoutes(e *echo.Echo, broker *sse.Broker) {
 	handler := handler.NewHandler(broker)
 
 	e.GET("channels/:id", handler.Bind(room.Render))
@@ -24,4 +16,7 @@ func RegisterRoutes(e *echo.Echo, redis *redis.Client) {
 
 	// post a new message in the channel
 	e.POST("channels/:id", handler.Bind(room.Broadcast))
+
+	//start a game
+	e.POST("channels/:id/event", handler.Bind(room.TestEvent))
 }

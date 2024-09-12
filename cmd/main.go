@@ -1,19 +1,39 @@
 package main
 
 import (
+	"survaive/bus"
 	"survaive/internal"
+	"survaive/internal/server"
+	"survaive/sse"
 
 	"html/template"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/redis/go-redis/v9"
+)
+
+const (
+	BROKER_REDIS_CHANNEL = "transport:sse"
 )
 
 func main() {
 	e := echo.New()
 
-	redis := redis.NewClient(&redis.Options{Addr: "localhost:6379", Password: "", DB: 0})
+	if connected, err := bus.IsRedisConnected(); !connected {
+		e.Logger.Fatal("Failed to connect to Redis:", err)
+	}
+
+	broker := sse.NewBroker()
+	broker.AttachRedisBus(bus.GetRedisClient(), BROKER_REDIS_CHANNEL)
+
+	/**
+	* Game Part
+	**/
+	server.InitGameEngine(broker)
+
+	/**
+	* Web Part
+	**/
 
 	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -23,7 +43,8 @@ func main() {
 	e.Renderer = internal.NewTemplateRenderer(templates)
 
 	// register new routes
-	internal.RegisterRoutes(e, redis)
+	internal.RegisterRoutes(e, broker)
 
 	e.Logger.Fatal(e.Start(":2000"))
+
 }
