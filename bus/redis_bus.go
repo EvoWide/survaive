@@ -18,11 +18,8 @@ func NewRedisBus(client *redis.Client, channel string) *RedisBus {
 	return &RedisBus{busId, channel, client}
 }
 
-func (b *RedisBus) Publish(payload string) {
-	err := b.Client.Publish(context.Background(), b.Channel, &BusMessage{b.BusId, payload}).Err() // todo: better error
-	if err != nil {
-		panic(err)
-	}
+func (b *RedisBus) Publish(payload string) error {
+	return b.Client.Publish(context.Background(), b.Channel, &BusMessage{b.BusId, payload}).Err()
 }
 
 func (b *RedisBus) Subscribe() chan string {

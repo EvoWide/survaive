@@ -70,18 +70,20 @@ func (b *Broker) BroadcastLocally(name string, payload string) {
 	}
 }
 
-func (b *Broker) Broadcast(c string, payload string) {
-	// we want to broadcast to redis even if no one is listening here!
-	b.BroadcastLocally(c, payload)
-
+func (b *Broker) Broadcast(c string, payload string) error {
 	if b.bus != nil {
 		out, err := json.Marshal(&SSEMessage{c, payload})
 		if err != nil {
-			// failed to send the emssage!
-			return
+			return err
 		}
-		b.bus.Publish(string(out))
+
+		if err = b.bus.Publish(string(out)); err != nil {
+			return err
+		}
 	}
+
+	b.BroadcastLocally(c, payload)
+	return nil
 }
 
 func (b *Broker) GetOrCreateStream(name string) *Stream {

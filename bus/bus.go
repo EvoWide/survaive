@@ -16,7 +16,7 @@ func (m *BusMessage) MarshalBinary() ([]byte, error) {
 }
 
 type Bus interface {
-	Publish(message string)
+	Publish(message string) error
 	Subscribe() chan string
 }
 
