@@ -32,6 +32,8 @@ func NewGame(name string, dataChan chan string) *Game {
 	data, _ := json.Marshal(gameCreated.State)
 	err := bus.GetRedisClient().HSet(context.Background(), name, data, 0).Err()
 
+	go gameCreated.enqueueEvents()
+
 	if err != nil {
 		panic(err)
 	}
@@ -39,6 +41,7 @@ func NewGame(name string, dataChan chan string) *Game {
 	return gameCreated
 }
 
+// todo: don't forget to cleanup when game is finished
 func (g *Game) enqueueEvents() {
 	for event := range g.channel {
 		g.mu.Lock()
